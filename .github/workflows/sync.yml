@@ -6,14 +6,14 @@ name: Sync Fork
 # events but only for the master branch
 on: 
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: '*/15 * * * *'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -26,7 +26,5 @@ jobs:
       with:
         # Token for the github API
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        # Branch to track
-        head: master # optional, default is master
         # Branch to keep updated
         base: autopull # optional, default is master
