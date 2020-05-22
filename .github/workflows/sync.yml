@@ -1,0 +1,21 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+
+jobs:
+  sync:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    # Sync Fork
+    - name: Fork Sync
+    - uses: TG908/fork-sync@v1.1.7
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        head: master
+        base: autopull
