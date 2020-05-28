@@ -26,13 +26,12 @@ jobs:
       shell: cmd
       run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
   release:
-    needs: build
+    needs: [build]
+    name: Release
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: ncipollo/release-action@v1
-      with:
-        artifact: "Osiris/Release/Osiris.dll"
-        allowUpdates: "true"
-        tag: v1.0
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: fnkr/github-action-ghr@v1.3
+        env:
+          GHR_PATH: Release/Osiris.dll
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
