@@ -26,18 +26,13 @@ jobs:
       shell: cmd
       run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
   release:
+    needs: build
     runs-on: ubuntu-latest
-    needs: [build]
     steps:
-    - uses: actions/checkout@master
-    - name: Create release
-      uses: Roang-zero1/github-create-release-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Create GitHub release
-      uses: Roang-zero1/github-upload-release-artifacts-action@master
+    - uses: actions/checkout@v1
+    - uses: ncipollo/release-action@v1
       with:
-        args:
-          Release/Osiris.dll
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        artifacts: "Release/Osiris.dll"
+        allowUpdates: "true"
+        tag: v1.0
+        token: ${{ secrets.GITHUB_TOKEN }}
