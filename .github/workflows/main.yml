@@ -27,7 +27,7 @@ jobs:
       run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
     - uses: ncipollo/release-action@v1
       with:
-        artifacts: "*"
+        artifacts: "Release/Osiris.dll"
         allowUpdates: "true"
         tag: v1.0
         token: ${{ secrets.GITHUB_TOKEN }}
