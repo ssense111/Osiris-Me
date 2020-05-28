@@ -34,4 +34,5 @@ jobs:
       with:
         artifacts: "Osiris/Release/Osiris.dll"
         allowUpdates: "true"
+        tag: v1.0
         token: ${{ secrets.GITHUB_TOKEN }}
