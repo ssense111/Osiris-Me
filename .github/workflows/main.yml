@@ -27,15 +27,11 @@ jobs:
       run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
   release:
     needs: build
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-    # Release command
-    - name: GitHub Releases
-      uses: fnkr/github-action-ghr@v1.3 
-      env:
-        GHR_PATH: D:\a\Osiris\Osiris\Osiris\Release\Osiris.dll
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v1
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "Osiris/Release/Osiris.dll"
+        allowUpdates: "true"
+        token: ${{ secrets.GITHUB_TOKEN }}
