@@ -25,14 +25,24 @@ jobs:
     - name: Build
       shell: cmd
       run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
-    # Upload DLL to Release
-    - name: Upload Release Asset
-      id: upload-release-asset 
-      uses: gfreezy/upload-release-asset@master
+    # Create Release
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        release_id: 27017267
+        tag_name: v1.6
+        release_name: v1.6
+        draft: false
+        prerelease: false
+    # Upload DLL to Release
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
         upload_url: https://uploads.github.com/repos/NetnetZ/Osiris/releases/27017267/assets{?name,label}
         asset_path: Osiris\Release\Osiris.dll
         asset_name: Osiris.dll
