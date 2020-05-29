@@ -28,7 +28,7 @@ jobs:
     # Upload DLL to Release
     - name: Upload Release Asset
       id: upload-release-asset 
-      uses: gfreezy/upload-release-asset@1.0.2
+      uses: gfreezy/upload-release-asset@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
