@@ -29,17 +29,17 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         # Artifact name
-        name: Osiris # optional
+        name: Osiris.dll # optional
         # A file, directory or wildcard pattern that describes what to upload
         path: Osiris\Release\Osiris.dll
     - name: Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "Osiris"
+        artifacts: "Osiris.dll/Osiris.dll"
         allowUpdates: "true"
         tag: v1.0
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Delete Artifact  
       uses: geekyeggo/delete-artifact@v1
       with:
-        name: Osiris
+        name: Osiris.dll
