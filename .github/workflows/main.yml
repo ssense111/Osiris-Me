@@ -43,7 +43,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: https://uploads.github.com/repos/NetnetZ/Osiris/releases/27017267/assets{?name,label}
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above
         asset_path: Osiris\Release\Osiris.dll
         asset_name: Osiris.dll
         asset_content_type: application/x-msdownload
