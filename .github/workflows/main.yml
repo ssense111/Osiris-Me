@@ -25,6 +25,7 @@ jobs:
     - name: Build
       shell: cmd
       run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
+    # Upload DLL to Release
     - name: Upload Release Asset
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1
