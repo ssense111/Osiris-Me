@@ -37,3 +37,19 @@ jobs:
         asset_path: Osiris\Release\Osiris.dll
         asset_name: Osiris.dll
         asset_content_type: application/x-msdownload
+    - uses: papeloto/action-zip@v1
+      with:
+        files: Osiris\Release\Osiris.dll
+        dest: Osiris.dll.zip  
+    # Upload Zipped DLL to Release
+    - name: Upload Release Asset
+      id: upload-zipped-release-asset 
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above
+        asset_path: Osiris.dll.zip
+        asset_name: Osiris.dll.zip
+        asset_content_type: application/zip  
+  
