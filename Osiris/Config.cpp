@@ -436,6 +436,7 @@ static void from_json(const json& j, Config::Visuals& v)
     read(j, "Hit marker time", v.hitMarkerTime);
     read(j, "Playermodel T", v.playerModelT);
     read(j, "Playermodel CT", v.playerModelCT);
+    read<value_t::object>(j, "CSGO Path", v.csgoPath);
     read<value_t::object>(j, "Color correction", v.colorCorrection);
 }
 
@@ -472,6 +473,15 @@ static void from_json(const json& j, item_setting& i)
 #endif
 
     read(j, "Stickers", i.stickers);
+}
+
+static void from_json(const json& j, modelchanger_setting& i)
+{
+    read(j, "Mdl Enabled", i.mdlenabled);
+#ifdef _WIN32
+    if (j.contains("Model that you selected"))
+        strncpy_s(i.modelthatyouselected, j["Model that you selected"].get<std::string>().c_str(), _TRUNCATE);
+#endif
 }
 
 static void from_json(const json& j, Config::Sound::Player& p)
@@ -626,6 +636,7 @@ void Config::load(size_t id, bool incremental) noexcept
     read<value_t::object>(j, "ESP", streamProofESP);
     read<value_t::object>(j, "Visuals", visuals);
     read(j, "Skin changer", skinChanger);
+    read(j, "Model changer", modelChanger);
     read<value_t::object>(j, "Sound", sound);
     read<value_t::object>(j, "Style", style);
     read<value_t::object>(j, "Misc", misc);
@@ -1029,6 +1040,7 @@ static void to_json(json& j, const Config::Visuals& o)
     WRITE("Hit marker time", hitMarkerTime);
     WRITE("Playermodel T", playerModelT);
     WRITE("Playermodel CT", playerModelCT);
+    WRITE("CSGO Path", csgoPath);
     WRITE("Color correction", colorCorrection);
 }
 
@@ -1086,6 +1098,15 @@ static void to_json(json& j, const item_setting& o)
     WRITE("Stickers", stickers);
 }
 
+static void to_json(json& j, const modelchanger_setting& o)
+{
+    const modelchanger_setting dummy;
+
+    WRITE("Mdl Enabled", mdlenabled);
+    if (o.modelthatyouselected[0])
+        j["Model that you selected"] = o.modelthatyouselected;
+}
+
 void removeEmptyObjects(json& j) noexcept
 {
     for (auto it = j.begin(); it != j.end();) {
@@ -1119,6 +1140,7 @@ void Config::save(size_t id) const noexcept
         j["Misc"] = misc;
         j["Style"] = style;
         j["Skin changer"] = skinChanger;
+        j["Model changer"] = modelChanger;
 
         removeEmptyObjects(j);
         out << std::setw(2) << j;
@@ -1157,6 +1179,7 @@ void Config::reset() noexcept
     streamProofESP = { };
     visuals = { };
     skinChanger = { };
+    modelChanger = { };
     sound = { };
     style = { };
     misc = { };
@@ -1171,6 +1194,36 @@ void Config::listConfigs() noexcept
         std::filesystem::directory_iterator{ },
         std::back_inserter(configs),
         [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
+}
+
+void Config::listModels() noexcept
+{
+    models.clear();
+
+    std::error_code ec;
+    pathtomodels = config->visuals.csgoPath;
+    std::transform(std::filesystem::directory_iterator{ pathtomodels, ec },
+        std::filesystem::directory_iterator{ },
+        std::back_inserter(models),
+        [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
+}
+
+void Config::listModelsMdlOnly() noexcept
+{
+    models.clear();
+
+    std::vector<std::string> temp;
+    std::error_code ec;
+    pathtomodels = config->visuals.csgoPath;
+    const std::string extension{ ".mdl" };
+
+    std::transform(std::filesystem::directory_iterator{ pathtomodels, ec },
+        std::filesystem::directory_iterator{ },
+        std::back_inserter(temp),
+        [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
+    std::copy_if(temp.begin(), temp.end(), std::back_inserter(models), [&extension](const std::string& p) {
+        return (p.substr(p.size() - extension.size(), extension.size()) == extension); });
+    temp.clear();
 }
 
 void Config::scheduleFontLoad(const std::string& name) noexcept

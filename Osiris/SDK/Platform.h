@@ -20,6 +20,7 @@
 
 #define CLIENT_DLL "client"
 #define ENGINE_DLL "engine"
+#define FILESYSTEM_DLL "filesystem_stdio"
 #define INPUTSYSTEM_DLL "inputsystem"
 #define LOCALIZE_DLL "localize"
 #define MATERIALSYSTEM_DLL "materialsystem"

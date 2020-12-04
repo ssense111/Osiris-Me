@@ -51,6 +51,7 @@ GUI::GUI() noexcept
         fonts.segoeui = io.Fonts->AddFontFromMemoryCompressedTTF(&CaviarDreamsNotoSansLight_compressed_data, CaviarDreamsNotoSansLight_compressed_size, 15.0f, &cfg, Helpers::getFontGlyphRanges());
         fonts.astriumtabs = io.Fonts->AddFontFromMemoryCompressedTTF(&Astriumtabs2_compressed_data, Astriumtabs2_compressed_size, 30.0f, &cfg, Helpers::getFontGlyphRanges());
     }
+    config->listModelsMdlOnly();
 #endif
 }
 
@@ -1138,6 +1139,74 @@ void GUI::renderSkinChangerWindow(bool contentOnly) noexcept
         ImGui::End();
 }
 
+void GUI::renderModelChangerWindow(bool contentOnly) noexcept
+{
+    if (!contentOnly) {
+        if (!window.modelChanger)
+            return;
+        ImGui::SetNextWindowSize({ 700.0f, 0.0f });
+        ImGui::Begin("Model changer", &window.modelChanger, windowFlags);
+    }
+
+    static auto itemIndex = 0;
+
+    ImGui::PushItemWidth(110.0f);
+    ImGui::Combo("##1", &itemIndex, [](void* data, int idx, const char** out_text) {
+        *out_text = game_data::weapon_names[idx].name;
+        return true;
+    }, nullptr, IM_ARRAYSIZE(game_data::weapon_names), 5);
+    ImGui::PopItemWidth();
+
+    auto& selected_entry = config->modelChanger[game_data::weapon_names[itemIndex].definition_index];
+
+    {
+        ImGui::Separator();
+        ImGui::Columns(2, nullptr, false);
+
+        auto& modelItems = config->getModels();
+        static bool mdlOnly = true;
+        static int currentModel = -1;
+
+        ImGui::Checkbox("Mdl Enabled", &selected_entry.mdlenabled);
+        if (ImGui::Button("Reload models") && mdlOnly)
+            config->listModelsMdlOnly();
+        else if (!mdlOnly)
+            config->listModels();
+        ImGui::SameLine();
+        if(ImGui::Checkbox("Mdl Only", &mdlOnly) && mdlOnly)
+            config->listModelsMdlOnly();
+        else if(!mdlOnly)
+            config->listModels();
+
+        static ImGuiTextFilter filter;
+        ImGui::Text("Search:");
+        filter.Draw("##searchbar");
+        if (ImGui::ListBoxHeader("Models List")) {
+            if (ImGui::Selectable("None"))
+                strcpy(selected_entry.modelthatyouselected, "");
+            for (size_t i = 0; i < modelItems.size(); i++) {
+                auto modelkit = modelItems.at(i).data();
+                if (filter.PassFilter(modelkit)) {
+                    std::string label = std::to_string(i + 1) + ". " + modelkit; //do this or you will have problems selecting elements with the same name
+
+                    if (ImGui::Selectable(label.c_str()))
+                        strcpy(selected_entry.modelthatyouselected, ("models/weapons/" + modelItems[i]).c_str());
+                }
+            }
+            ImGui::ListBoxFooter();
+        }
+        ImGui::InputText("Model", selected_entry.modelthatyouselected, 255);
+        ImGui::InputText("csgo Path", &config->visuals.csgoPath);
+    }
+
+    ImGui::Separator();
+
+    ImGui::TextUnformatted("nnModelz by vanilla-sense, ssense, uc members (shonax)");
+
+    if (!contentOnly)
+        ImGui::End();
+}
+
 void GUI::renderSoundWindow(bool contentOnly) noexcept
 {
     if (!contentOnly) {
@@ -1412,7 +1481,7 @@ void GUI::renderConfigWindow(bool contentOnly) noexcept
             ImGui::OpenPopup("Config to reset");
 
         if (ImGui::BeginPopup("Config to reset")) {
-            static constexpr const char* names[]{ "Whole", "Aimbot", "Triggerbot", "Backtrack", "Anti aim", "Glow", "Chams", "ESP", "Visuals", "Skin changer", "Sound", "Style", "Misc" };
+            static constexpr const char* names[]{ "Whole", "Aimbot", "Triggerbot", "Backtrack", "Anti aim", "Glow", "Chams", "ESP", "Visuals", "Skin changer", "Sound", "Style", "Misc", "Model changer" };
             for (int i = 0; i < IM_ARRAYSIZE(names); i++) {
                 if (i == 1) ImGui::Separator();
 
@@ -1431,6 +1500,7 @@ void GUI::renderConfigWindow(bool contentOnly) noexcept
                     case 10: config->sound = { }; break;
                     case 11: config->style = { }; updateColors(); break;
                     case 12: config->misc = { };  Misc::updateClanTag(true); break;
+                    case 13: config->modelChanger = { }; break;
                     }
                 }
             }
@@ -1557,7 +1627,8 @@ void GUI::renderGuiStyle2() noexcept
         "ESP",
         "Glow",
         "Visuals",
-        "Skin changer"
+        "Skin changer",
+        "Model changer"
             };
             ImGui::BeginGroup();
             ImGuiStyle* style = &ImGui::GetStyle();
@@ -1597,6 +1668,9 @@ void GUI::renderGuiStyle2() noexcept
                 break;
             case 4:
                 renderSkinChangerWindow(true);
+                break;
+            case 5:
+                renderModelChangerWindow(true);
                 break;
             }
             ImGui::EndTabItem();

@@ -8,6 +8,7 @@
 
 #include "imgui/imgui.h"
 #include "Hacks/SkinChanger.h"
+#include "Hacks/ModelChanger.h"
 #include "ConfigStructs.h"
 
 class Config {
@@ -20,10 +21,17 @@ public:
     void rename(size_t, const char*) noexcept;
     void reset() noexcept;
     void listConfigs() noexcept;
+    void listModels() noexcept;
+    void listModelsMdlOnly() noexcept;
 
     constexpr auto& getConfigs() noexcept
     {
         return configs;
+    }
+
+    constexpr auto& getModels() noexcept
+    {
+        return models;
     }
 
     struct Color {
@@ -165,6 +173,7 @@ public:
         float hitMarkerTime{ 0.6f };
         int playerModelT{ 0 };
         int playerModelCT{ 0 };
+        std::string csgoPath{ "csgo\\models\\weapons" };
 
         struct ColorCorrection {
             bool enabled = false;
@@ -179,6 +188,7 @@ public:
     } visuals;
 
     std::array<item_setting, 36> skinChanger;
+    std::array<modelchanger_setting, 64> modelChanger;
 
     struct Sound {
         int chickenVolume{ 100 };
@@ -283,6 +293,8 @@ private:
     std::unordered_map<std::string, Font> fonts;
     std::filesystem::path path;
     std::vector<std::string> configs;
+    std::filesystem::path pathtomodels;
+    std::vector<std::string> models;
 };
 
 inline std::unique_ptr<Config> config;

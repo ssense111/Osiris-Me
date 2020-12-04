@@ -36,6 +36,7 @@
 #include "Hacks/StreamProofESP.h"
 #include "Hacks/Glow.h"
 #include "Hacks/Misc.h"
+#include "Hacks/ModelChanger.h"
 #include "Hacks/SkinChanger.h"
 #include "Hacks/Triggerbot.h"
 #include "Hacks/Visuals.h"
@@ -144,6 +145,17 @@ static HRESULT __stdcall reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* 
     ImGui_ImplDX9_InvalidateDeviceObjects();
     return hooks->originalReset(device, params);
 }
+
+//sv_pure bypass
+bool __fastcall hkLooseFileAllowed(void* ecx, void* edx)
+{
+    return true;
+}
+int __stdcall hGetUnverifiedFileHashes(void* _this, void* someclass, int nMaxFiles)
+{
+    return 0;
+}
+//sv_pure bypass
 
 #endif
 
@@ -319,6 +331,7 @@ static void __STDCALL frameStageNotify(LINUX_ARGS(void* thisptr,) FrameStage sta
         Misc::oppositeHandKnife(stage);
         Visuals::removeGrass(stage);
         Visuals::modifySmoke(stage);
+        ModelChanger::weaponModel(stage);
         Visuals::playerModel(stage);
         Visuals::disablePostProcessing(stage);
         Visuals::removeVisualRecoil(stage);
@@ -622,6 +635,7 @@ void Hooks::install() noexcept
     client.init(interfaces->client);
     clientMode.init(memory->clientMode);
     engine.init(interfaces->engine);
+    fileSystem.init(interfaces->fileSystem);
     modelRender.init(interfaces->modelRender);
     panel.init(interfaces->panel);
     sound.init(interfaces->sound);
@@ -641,6 +655,8 @@ void Hooks::install() noexcept
     engine.hookAt(82, isPlayingDemo);
     engine.hookAt(101, getScreenAspectRatio);
     engine.hookAt(218, getDemoPlaybackParameters);
+    fileSystem.hookAt(128, hkLooseFileAllowed);
+    fileSystem.hookAt(101, hGetUnverifiedFileHashes);
     modelRender.hookAt(21, drawModelExecute);
     panel.hookAt(41, paintTraverse);
     sound.hookAt(5, emitSound);
@@ -689,6 +705,7 @@ void Hooks::uninstall() noexcept
     client.restore();
     clientMode.restore();
     engine.restore();
+    fileSystem.restore();
     modelRender.restore();
     panel.restore();
     sound.restore();

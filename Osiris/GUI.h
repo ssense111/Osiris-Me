@@ -26,6 +26,7 @@ private:
     void renderSoundWindow(bool contentOnly = false) noexcept;
     void renderStyleWindow(bool contentOnly = false) noexcept;
     void renderMiscWindow(bool contentOnly = false) noexcept;
+    void renderModelChangerWindow(bool contentOnly = false) noexcept;
     void renderConfigWindow(bool contentOnly = false) noexcept;
     void renderGuiStyle2() noexcept;
 
@@ -39,6 +40,7 @@ private:
         bool streamProofESP = false;
         bool visuals = false;
         bool skinChanger = false;
+        bool modelChanger = false;
         bool sound = false;
         bool style = false;
         bool misc = false;
