@@ -136,7 +136,22 @@ void Chams::renderWeapons() noexcept
     if (!localPlayer || !localPlayer->isAlive() || localPlayer->isScoped())
         return;
 
-    applyChams(config->chams["Weapons"].materials, localPlayer->health());
+    const auto activeWeapon = localPlayer->getActiveWeapon();
+
+    if (activeWeapon) {
+        const auto itemIndex = activeWeapon->itemDefinitionIndex();
+        const auto itemIndex2 = activeWeapon->itemDefinitionIndex2();
+        auto& selected_entry = config->modelChanger[is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
+        if (selected_entry.vtfenabled && selected_entry.skinthatyouselected[0]) {
+            renderWeaponsSkins();
+        }
+        else if (!selected_entry.vtfenabled && !selected_entry.skinthatyouselected[0]) {
+            applyChams(config->chams["Weapons"].materials, localPlayer->health());
+        }
+    }
+    else {
+        applyChams(config->chams["Weapons"].materials, localPlayer->health());
+    }
 }
 
 void Chams::renderHands() noexcept
@@ -237,6 +252,42 @@ void Chams::applyChams(const std::array<Config::Chams::Material, 7>& chams, int 
         material->setMaterialVarFlag(MaterialVarFlag::WIREFRAME, cham.wireframe);
         interfaces->studioRender->forcedMaterialOverride(material);
         hooks->modelRender.callOriginal<void, 21>(ctx, state, info, customMatrix ? customMatrix : customBoneToWorld);
+        appliedChams = true;
+    }
+}
+
+void Chams::renderWeaponsSkins() noexcept
+{
+    if (!localPlayer || !localPlayer->isAlive() || localPlayer->isScoped())
+        return;
+
+    const auto activeWeapon = localPlayer->getActiveWeapon();
+    const auto itemIndex = activeWeapon->itemDefinitionIndex();
+    const auto itemIndex2 = activeWeapon->itemDefinitionIndex2();
+    auto& selected_entry = config->modelChanger[is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
+
+    if (!selected_entry.skinthatyouselected[0])
+        return;
+
+    if (!localPlayer || !localPlayer->isAlive())
+        return;
+
+    if (selected_entry.vtfenabled && selected_entry.skinthatyouselected[0]) {
+        if (!config->unhooking && config->currentcustomskin != selected_entry.skinthatyouselected) {
+            customskins = interfaces->materialSystem->createMaterial(selected_entry.skinthatyouselected, KeyValues::fromString("VertexLitGeneric", selected_entry.skinthatyouselected));
+            config->currentcustomskin = selected_entry.skinthatyouselected;
+        }
+        float r, g, b;
+        r = 255;
+        g = 255;
+        b = 255;
+        const auto pulse = 255 * (1.0f);
+        customskins->alphaModulate(pulse);
+        hooks->modelRender.callOriginal<void, 21>(ctx, state, info, customBoneToWorld);
+        customskins->setMaterialVarFlag(MaterialVarFlag::IGNOREZ, false);
+        customskins->setMaterialVarFlag(MaterialVarFlag::WIREFRAME, false);
+        interfaces->studioRender->forcedMaterialOverride(customskins);
+        hooks->modelRender.callOriginal<void, 21>(ctx, state, info, customBoneToWorld);
         appliedChams = true;
     }
 }

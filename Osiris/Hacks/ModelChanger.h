@@ -14,5 +14,7 @@ namespace ModelChanger
 struct modelchanger_setting
 {
 	bool mdlenabled = false;
-	char modelthatyouselected[999] = "";
+	bool vtfenabled = false;
+	char modelthatyouselected[255] = "";
+	char skinthatyouselected[255] = "";
 };

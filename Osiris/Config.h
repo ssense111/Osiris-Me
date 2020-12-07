@@ -23,6 +23,11 @@ public:
     void listConfigs() noexcept;
     void listModels() noexcept;
     void listModelsMdlOnly() noexcept;
+    void listSkins() noexcept;
+    void listSkinsVtfOnly() noexcept;
+
+    bool unhooking{ false };
+    std::string currentcustomskin;
 
     constexpr auto& getConfigs() noexcept
     {
@@ -32,6 +37,11 @@ public:
     constexpr auto& getModels() noexcept
     {
         return models;
+    }
+    
+    constexpr auto& getCustomSkins() noexcept
+    {
+        return customSkins;
     }
 
     struct Color {
@@ -174,6 +184,7 @@ public:
         int playerModelT{ 0 };
         int playerModelCT{ 0 };
         std::string csgoPath{ "csgo\\models\\weapons" };
+        std::string materialPath{ "csgo\\materials\\models\\weapons" };
 
         struct ColorCorrection {
             bool enabled = false;
@@ -295,6 +306,8 @@ private:
     std::vector<std::string> configs;
     std::filesystem::path pathtomodels;
     std::vector<std::string> models;
+    std::filesystem::path pathtoskins;
+    std::vector<std::string> customSkins;
 };
 
 inline std::unique_ptr<Config> config;

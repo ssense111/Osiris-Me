@@ -52,6 +52,7 @@ GUI::GUI() noexcept
         fonts.astriumtabs = io.Fonts->AddFontFromMemoryCompressedTTF(&Astriumtabs2_compressed_data, Astriumtabs2_compressed_size, 30.0f, &cfg, Helpers::getFontGlyphRanges());
     }
     config->listModelsMdlOnly();
+    config->listSkinsVtfOnly();
 #endif
 }
 
@@ -1204,6 +1205,46 @@ void GUI::renderModelChangerWindow(bool contentOnly) noexcept
         ImGui::InputText("csgo Path", &config->visuals.csgoPath);
     }
 
+    ImGui::NextColumn();
+
+    {
+        auto& skinItems = config->getCustomSkins();
+        static bool vtfOnly = true;
+
+        ImGui::Checkbox("Vtf Enabled", &selected_entry.vtfenabled);
+        if (ImGui::Button("Reload skinss") && vtfOnly)
+            config->listSkinsVtfOnly();
+        else if (!vtfOnly)
+            config->listSkins();
+        ImGui::SameLine();
+        if (ImGui::Checkbox("Vtf Only", &vtfOnly) && vtfOnly)
+            config->listSkinsVtfOnly();
+        else if (!vtfOnly)
+            config->listSkins();
+
+        static ImGuiTextFilter filter;
+        ImGui::Text("Skin Search:");
+        filter.Draw("##skinsearchbar");
+        if (ImGui::ListBoxHeader("Skins List")) {
+            if (ImGui::Selectable("None"))
+                strcpy(selected_entry.skinthatyouselected, "");
+            for (size_t i = 0; i < skinItems.size(); i++) {
+                auto skinkit = skinItems.at(i).data();
+                if (filter.PassFilter(skinkit)) {
+                    std::string label = std::to_string(i + 1) + ". " + skinkit; //do this or you will have problems selecting elements with the same name
+
+                    if (ImGui::Selectable(label.c_str()))
+                        strcpy(selected_entry.skinthatyouselected, ("$baseTexture models/weapons/" + skinItems[i]).c_str());
+                }
+            }
+            ImGui::ListBoxFooter();
+        }
+        ImGui::InputText("Skin", selected_entry.skinthatyouselected, 255);
+        ImGui::InputText("skin Path", &config->visuals.materialPath);
+    }
+
+    ImGui::Columns(1);
+
     ImGui::Separator();
 
     ImGui::TextUnformatted("nnModelz by vanilla-sense, ssense, uc members (shonax)");
@@ -1624,7 +1665,7 @@ void GUI::renderGuiStyle2() noexcept
                 renderAntiAimWindow(true);
                 break;
             }
-            ImGui::EndTabItem();
+            
         }
         if (tabb == 1) {
             const char* tabs[] = {
@@ -1678,7 +1719,7 @@ void GUI::renderGuiStyle2() noexcept
                 renderModelChangerWindow(true);
                 break;
             }
-            ImGui::EndTabItem();
+            
         }
         if (tabb == 2) {
             const char* tabs[] = {
@@ -1724,7 +1765,7 @@ void GUI::renderGuiStyle2() noexcept
                 renderConfigWindow(true);
                 break;
             }
-            ImGui::EndTabItem();
+            
         }
 
     }

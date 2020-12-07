@@ -16,6 +16,7 @@ public:
 private:
     void renderPlayer(Entity* player) noexcept;
     void renderWeapons() noexcept;
+    void renderWeaponsSkins() noexcept;
     void renderHands() noexcept;
     void renderSleeves() noexcept;
 
@@ -32,6 +33,7 @@ private:
     Material* glow;
     Material* pearlescent;
     Material* metallic;
+    Material* customskins;
 
     constexpr auto dispatchMaterial(int id) const noexcept
     {
@@ -54,6 +56,7 @@ private:
     }
 
     bool appliedChams;
+    bool appliedweaponChams;
     void* ctx;
     void* state;
     const ModelRenderInfo* info;

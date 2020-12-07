@@ -437,6 +437,7 @@ static void from_json(const json& j, Config::Visuals& v)
     read(j, "Playermodel T", v.playerModelT);
     read(j, "Playermodel CT", v.playerModelCT);
     read<value_t::object>(j, "CSGO Path", v.csgoPath);
+    read<value_t::object>(j, "Material Path", v.materialPath);
     read<value_t::object>(j, "Color correction", v.colorCorrection);
 }
 
@@ -478,9 +479,12 @@ static void from_json(const json& j, item_setting& i)
 static void from_json(const json& j, modelchanger_setting& i)
 {
     read(j, "Mdl Enabled", i.mdlenabled);
+    read(j, "Vtf Enabled", i.vtfenabled);
 #ifdef _WIN32
     if (j.contains("Model that you selected"))
         strncpy_s(i.modelthatyouselected, j["Model that you selected"].get<std::string>().c_str(), _TRUNCATE);
+    if (j.contains("Skin that you selected"))
+        strncpy_s(i.skinthatyouselected, j["Skin that you selected"].get<std::string>().c_str(), _TRUNCATE);
 #endif
 }
 
@@ -1041,6 +1045,7 @@ static void to_json(json& j, const Config::Visuals& o)
     WRITE("Playermodel T", playerModelT);
     WRITE("Playermodel CT", playerModelCT);
     WRITE("CSGO Path", csgoPath);
+    WRITE("Material Path", materialPath);
     WRITE("Color correction", colorCorrection);
 }
 
@@ -1103,8 +1108,11 @@ static void to_json(json& j, const modelchanger_setting& o)
     const modelchanger_setting dummy;
 
     WRITE("Mdl Enabled", mdlenabled);
+    WRITE("Vtf Enabled", vtfenabled);
     if (o.modelthatyouselected[0])
         j["Model that you selected"] = o.modelthatyouselected;
+    if (o.skinthatyouselected[0])
+        j["Skin that you selected"] = o.skinthatyouselected;
 }
 
 void removeEmptyObjects(json& j) noexcept
@@ -1222,7 +1230,36 @@ void Config::listModelsMdlOnly() noexcept
         std::back_inserter(temp),
         [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
     std::copy_if(temp.begin(), temp.end(), std::back_inserter(models), [&extension](const std::string& p) {
-        return (p.substr(p.size() - extension.size(), extension.size()) == extension); });
+        return (p.size() > extension.size()) ?(p.substr(p.size() - extension.size(), extension.size()) == extension) :false; });
+    temp.clear();
+}
+
+void Config::listSkins() noexcept
+{
+    customSkins.clear();
+
+    std::error_code ec;
+    pathtoskins = config->visuals.materialPath;
+    std::transform(std::filesystem::directory_iterator{ pathtoskins, ec },
+        std::filesystem::directory_iterator{ },
+        std::back_inserter(customSkins),
+        [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
+}
+
+void Config::listSkinsVtfOnly() noexcept
+{
+    customSkins.clear();
+
+    std::vector<std::string> temp;
+    std::error_code ec;
+    pathtoskins = config->visuals.materialPath;
+    const std::string extension{ ".vtf" };
+    std::transform(std::filesystem::directory_iterator{ pathtoskins, std::filesystem::directory_options::skip_permission_denied, ec },
+        std::filesystem::directory_iterator{ },
+        std::back_inserter(temp),
+        [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
+    std::copy_if(temp.begin(), temp.end(), std::back_inserter(customSkins), [&extension](const std::string& p) {
+        return (p.size() > extension.size()) ?(p.substr(p.size() - extension.size(), extension.size()) == extension) :false; });
     temp.clear();
 }
 
