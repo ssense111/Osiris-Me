@@ -163,6 +163,7 @@
     </ClCompile>
     <ClCompile Include="Hacks\ModelChanger.cpp">
       <Filter>Hacks</Filter>
+    </ClCompile>
     <ClCompile Include="InputUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -470,6 +471,7 @@
     </ClInclude>
     <ClInclude Include="Hacks\ModelChanger.h">
       <Filter>Hacks</Filter>
+    </ClInclude>
     <ClInclude Include="InputUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
