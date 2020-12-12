@@ -137,13 +137,17 @@ static HRESULT __stdcall reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* 
 }
 
 //sv_pure bypass
-bool __fastcall hkLooseFileAllowed(void* ecx, void* edx)
+static bool __FASTCALL hkLooseFileAllowed(void* ecx, void* edx)
 {
-    return true;
+    if(config->misc.sv_purebypass)
+        return true;
+    return hooks->fileSystem.getOriginal<bool, 128>(ecx, edx);
 }
-int __stdcall hGetUnverifiedFileHashes(void* _this, void* someclass, int nMaxFiles)
+static int __STDCALL hGetUnverifiedFileHashes(void* _this, void* someclass, int nMaxFiles)
 {
-    return 0;
+    if(config->misc.sv_purebypass)
+        return 0;
+    return hooks->fileSystem.callOriginal<int, 101>(_this, someclass, nMaxFiles);
 }
 //sv_pure bypass
 

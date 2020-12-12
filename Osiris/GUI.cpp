@@ -1435,6 +1435,7 @@ void GUI::renderMiscWindow(bool contentOnly) noexcept
     ImGui::SliderFloat("Max angle delta", &config->misc.maxAngleDelta, 0.0f, 255.0f, "%.2f");
     ImGui::Checkbox("Fake prime", &config->misc.fakePrime);
     ImGui::Checkbox("Opposite Hand Knife", &config->misc.oppositeHandKnife);
+    ImGui::Checkbox("sv_pure bypass", &config->misc.sv_purebypass);
     ImGui::Checkbox("Preserve Killfeed", &config->misc.preserveKillfeed.enabled);
     ImGui::SameLine();
 
