@@ -23,3 +23,9 @@ namespace ImGuiCustom
     void colorPicker2(const char* name, float color[3], bool* enable = nullptr, bool* rainbow = nullptr, float* rainbowSpeed = nullptr) noexcept;
     void colorPicker2(const char* name, Config::ColorToggle& colorConfig) noexcept;
 }
+
+namespace ImGui
+{
+    void progressBarFullWidth(float fraction, float height) noexcept;
+    void textUnformattedCentered(const char* text) noexcept;
+}

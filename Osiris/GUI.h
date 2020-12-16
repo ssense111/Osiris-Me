@@ -54,6 +54,8 @@ private:
         ImFont* segoeui = nullptr;
         ImFont* astriumtabs = nullptr;
     } fonts;
+
+    float timeToNextConfigRefresh = 0.1f;
 };
 
 inline std::unique_ptr<GUI> gui;

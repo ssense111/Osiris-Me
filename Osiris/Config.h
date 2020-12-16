@@ -29,6 +29,8 @@ public:
 
     bool unhooking{ false };
     std::string currentcustomskin;
+    void createConfigDir() const noexcept;
+    void openConfigDir() const noexcept;
 
     constexpr auto& getConfigs() noexcept
     {
@@ -57,9 +59,6 @@ public:
 
     struct Aimbot {
         bool enabled{ false };
-        bool onKey{ false };
-        int key{ 0 };
-        int keyMode{ 0 };
         bool aimlock{ false };
         bool silent{ false };
         bool friendlyFire{ false };
@@ -79,6 +78,9 @@ public:
         bool betweenShots{ true };
     };
     std::array<Aimbot, 40> aimbot;
+    bool aimbotOnKey{ false };
+    int aimbotKey{ 0 };
+    int aimbotKeyMode{ 0 };
 
     struct Triggerbot {
         bool enabled = false;

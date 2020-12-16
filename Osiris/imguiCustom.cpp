@@ -1,4 +1,5 @@
 #include "imgui/imgui.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui/imgui_internal.h"
 
 #include "imguiCustom.h"
@@ -131,39 +132,31 @@ void ImGuiCustom::arrowButtonDisabled(const char* id, ImGuiDir dir) noexcept
     ImGui::PopStyleVar();
 }
 
-void ImGuiCustom::colorPicker2(const char* name, float color[4], bool* enable, bool* rainbow, float* rainbowSpeed) noexcept
+void ImGui::progressBarFullWidth(float fraction, float height) noexcept
 {
-    ImGui::PushID(name);
-    if (enable) {
-        ImGui::Checkbox("##check", enable);
-        ImGui::SameLine(0.0f, 5.0f);
-    }
-    bool openPopup = ImGui::ColorButton("##btn", color, ImGuiColorEditFlags_NoTooltip);
-    ImGui::SameLine(0.0f, 5.0f);
-    ImGui::TextUnformatted(name);
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return;
 
-    if (openPopup)
-        ImGui::OpenPopup("##popup");
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
 
-    if (ImGui::BeginPopup("##popup")) {
-        ImGui::ColorPicker4("##picker", color, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_AlphaBar);
+    ImVec2 pos = window->DC.CursorPos;
+    ImVec2 size = CalcItemSize(ImVec2{ -1, 0 }, CalcItemWidth(), height + style.FramePadding.y * 2.0f);
+    ImRect bb(pos, pos + size);
+    ItemSize(size, style.FramePadding.y);
+    if (!ItemAdd(bb, 0))
+        return;
 
-        if (rainbow && rainbowSpeed) {
-            ImGui::SameLine();
-
-            if (ImGui::BeginChild("##child", { 100.0f, 0.0f })) {
-                ImGui::Checkbox("Rainbow", rainbow);
-                ImGui::SetNextItemWidth(50.0f);
-                ImGui::InputFloat("Speed", rainbowSpeed, 0.0f, 0.0f, "%.1f");
-                ImGui::EndChild();
-            }
-        }
-        ImGui::EndPopup();
-    }
-    ImGui::PopID();
+    // Render
+    fraction = ImSaturate(fraction);
+    RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
+    bb.Expand(ImVec2(-style.FrameBorderSize, -style.FrameBorderSize));
+    RenderRectFilledRangeH(window->DrawList, bb, GetColorU32(ImGuiCol_PlotHistogram), 0.0f, fraction, style.FrameRounding);
 }
 
-void ImGuiCustom::colorPicker2(const char* name, Config::ColorToggle& colorConfig) noexcept
+void ImGui::textUnformattedCentered(const char* text) noexcept
 {
-    colorPicker(name, colorConfig.color.data(), &colorConfig.enabled, &colorConfig.rainbow, &colorConfig.rainbowSpeed);
+    ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize(text).x) / 2.0f);
+    ImGui::TextUnformatted(text);
 }
