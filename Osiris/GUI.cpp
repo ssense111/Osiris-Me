@@ -1,3 +1,4 @@
+﻿#include <array>
 #include <cwctype>
 #include <fstream>
 #include <functional>
@@ -48,8 +49,17 @@ GUI::GUI() noexcept
         cfg.OversampleV = 3;
       
         fonts.tahoma = io.Fonts->AddFontFromMemoryCompressedTTF(&CaviarDreamsNotoSansLight_compressed_data, CaviarDreamsNotoSansLight_compressed_size, 15.0f, &cfg, Helpers::getFontGlyphRanges());
-        fonts.segoeui = io.Fonts->AddFontFromMemoryCompressedTTF(&CaviarDreamsNotoSansLight_compressed_data, CaviarDreamsNotoSansLight_compressed_size, 15.0f, &cfg, Helpers::getFontGlyphRanges());
         fonts.astriumtabs = io.Fonts->AddFontFromMemoryCompressedTTF(&Astriumtabs2_compressed_data, Astriumtabs2_compressed_size, 30.0f, &cfg, Helpers::getFontGlyphRanges());
+
+        cfg.MergeMode = true;
+        static constexpr ImWchar symbol[]{
+            0x2605, 0x2605, // ★
+            0
+        };
+        io.Fonts->AddFontFromFileTTF((path / "seguisym.ttf").string().c_str(), 15.0f, &cfg, symbol);
+        cfg.MergeMode = false;
+
+        fonts.segoeui = io.Fonts->AddFontFromMemoryCompressedTTF(&CaviarDreamsNotoSansLight_compressed_data, CaviarDreamsNotoSansLight_compressed_size, 15.0f, &cfg, Helpers::getFontGlyphRanges());
     }
     config->listModelsMdlOnly();
     config->listSkinsVtfOnly();
@@ -1031,7 +1041,7 @@ void GUI::renderSkinChangerWindow(bool contentOnly) noexcept
     ImGui::Combo("##1", &itemIndex, [](void* data, int idx, const char** out_text) {
         *out_text = game_data::weapon_names[idx].name;
         return true;
-        }, nullptr, IM_ARRAYSIZE(game_data::weapon_names), 5);
+        }, nullptr, game_data::weapon_names.size(), 5);
     ImGui::PopItemWidth();
 
     auto& selected_entry = config->skinChanger[itemIndex];
@@ -1073,20 +1083,20 @@ void GUI::renderSkinChangerWindow(bool contentOnly) noexcept
         }
 
         ImGui::Combo("Quality", &selected_entry.entity_quality_vector_index, [](void* data, int idx, const char** out_text) {
-            *out_text = game_data::quality_names[idx].name;
+            *out_text = SkinChanger::getQualities()[idx].name.c_str(); // safe within this lamba
             return true;
-            }, nullptr, IM_ARRAYSIZE(game_data::quality_names), 5);
+            }, nullptr, SkinChanger::getQualities().size(), 5);
 
         if (itemIndex == 0) {
             ImGui::Combo("Knife", &selected_entry.definition_override_vector_index, [](void* data, int idx, const char** out_text) {
                 *out_text = game_data::knife_names[idx].name;
                 return true;
-                }, nullptr, IM_ARRAYSIZE(game_data::knife_names), 5);
+                }, nullptr, game_data::knife_names.size(), 5);
         } else if (itemIndex == 1) {
             ImGui::Combo("Glove", &selected_entry.definition_override_vector_index, [](void* data, int idx, const char** out_text) {
                 *out_text = game_data::glove_names[idx].name;
                 return true;
-                }, nullptr, IM_ARRAYSIZE(game_data::glove_names), 5);
+                }, nullptr, game_data::glove_names.size(), 5);
         } else {
             static auto unused_value = 0;
             selected_entry.definition_override_vector_index = 0;
