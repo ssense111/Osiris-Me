@@ -1214,7 +1214,7 @@ void GUI::renderModelChangerWindow(bool contentOnly) noexcept
     ImGui::Combo("##1", &itemIndex, [](void* data, int idx, const char** out_text) {
         *out_text = game_data::weapon_names[idx].name;
         return true;
-    }, nullptr, IM_ARRAYSIZE(game_data::weapon_names), 5);
+    }, nullptr, game_data::weapon_names.size(), 5);
     ImGui::PopItemWidth();
 
     auto& selected_entry = config->modelChanger[game_data::weapon_names[itemIndex].definition_index];
