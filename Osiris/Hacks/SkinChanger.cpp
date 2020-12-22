@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cwctype>
 #include <fstream>
+#include <unordered_set>
 
 #include "../Interfaces.h"
 #include "../SDK/Entity.h"
@@ -21,6 +22,7 @@
 #include "../nSkinz/Utilities/vmt_smart_hook.hpp"
 #include "../SDK/GameEvent.h"
 #include "../SDK/Platform.h"
+#include "../Helpers.h"
 
 /* This file is part of nSkinz by namazso, licensed under the MIT license:
 *
@@ -57,21 +59,10 @@ item_setting* get_by_definition_index(const int definition_index)
     return it == std::end(config->skinChanger) ? nullptr : &*it;
 }
 
-static std::wstring toUpperWide(const std::string& s) noexcept
-{
-    std::wstring upperCase(s.length(), L'\0');
-    const auto newLen = mbstowcs(upperCase.data(), s.c_str(), s.length());
-    if (newLen != static_cast<std::size_t>(-1))
-        upperCase.resize(newLen);
-    std::transform(upperCase.begin(), upperCase.end(), upperCase.begin(), [](wchar_t w) { return std::towupper(w); });
-    return upperCase;
-}
-
-static std::vector<SkinChanger::PaintKit> skinKits{ { 0, "-", L"-" } };
+static std::vector<SkinChanger::PaintKit> skinKits{ { 0, "-" } };
 static std::vector<SkinChanger::PaintKit> gloveKits;
-static std::vector<SkinChanger::PaintKit> stickerKits{ { 0, "None", L"NONE" } };
 
-void SkinChanger::initializeKits() noexcept
+static void initializeKits() noexcept
 {
     static bool initalized = false;
     if (initalized)
@@ -81,6 +72,7 @@ void SkinChanger::initializeKits() noexcept
     const auto itemSchema = memory->itemSystem()->getItemSchema();
 
     std::vector<std::pair<int, WeaponId>> kitsWeapons;
+    kitsWeapons.reserve(2000);
 
     for (int i = 0; i < itemSchema->getLootListCount(); ++i) {
         const auto& contents = itemSchema->getLootList(i)->getLootListContents();
@@ -101,19 +93,19 @@ void SkinChanger::initializeKits() noexcept
         }
     }
 
+    std::sort(kitsWeapons.begin(), kitsWeapons.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+
+    skinKits.reserve(itemSchema->paintKits.lastAlloc);
+    gloveKits.reserve(itemSchema->paintKits.lastAlloc);
     for (int i = 0; i <= itemSchema->paintKits.lastAlloc; i++) {
         const auto paintKit = itemSchema->paintKits.memory[i].value;
 
         if (paintKit->id == 0 || paintKit->id == 9001) // ignore workshop_default
             continue;
 
-        std::string name;
-
-        if (const auto it = std::find_if(kitsWeapons.begin(), kitsWeapons.end(), [&paintKit](const auto& p) { return p.first == paintKit->id; }); it != kitsWeapons.end()) {
-            name = interfaces->localize->findAsUTF8(itemSchema->getItemDefinitionInterface(it->second)->getItemBaseName());
-            name += " | ";
-        } else if (paintKit->id >= 10000) {
+        if (paintKit->id >= 10000) {
             const std::string_view gloveName{ paintKit->name.data() };
+            std::string name;
 
             if (gloveName.starts_with("bloodhound"))
                 name = interfaces->localize->findAsUTF8("CSGO_Wearable_t_studdedgloves");
@@ -133,26 +125,33 @@ void SkinChanger::initializeKits() noexcept
                 assert(false);
 
             name += " | ";
+            name += interfaces->localize->findAsUTF8(paintKit->itemName.data() + 1);
+            gloveKits.emplace_back(paintKit->id, std::move(name));
+        } else {
+            std::unordered_set<WeaponId> weapons;
 
+            for (auto it = std::lower_bound(kitsWeapons.begin(), kitsWeapons.end(), paintKit->id, [](const auto& p, auto id) { return p.first < id; }); it != kitsWeapons.end() && it->first == paintKit->id; ++it) {
+                weapons.insert(it->second);
+            }
+
+            for (auto weapon : weapons) {
+                std::string name = interfaces->localize->findAsUTF8(itemSchema->getItemDefinitionInterface(weapon)->getItemBaseName());
+                name += " | ";
+                name += interfaces->localize->findAsUTF8(paintKit->itemName.data() + 1);
+                skinKits.emplace_back(paintKit->id, std::move(name));
+            }
+
+            if (weapons.empty() || weapons.size() > 1) { // this paint kit fits more than one weapon
+                std::string name = interfaces->localize->findAsUTF8(paintKit->itemName.data() + 1);
+                skinKits.emplace_back(paintKit->id, std::move(name));
+            }
         }
-
-        name += interfaces->localize->findAsUTF8(paintKit->itemName.data() + 1);
-
-        (paintKit->id < 10000 ? skinKits : gloveKits).emplace_back(paintKit->id, name, toUpperWide(name));
     }
 
     std::sort(skinKits.begin() + 1, skinKits.end());
+    skinKits.shrink_to_fit();
     std::sort(gloveKits.begin(), gloveKits.end());
-
-    for (int i = 0; i <= itemSchema->stickerKits.lastAlloc; i++) {
-        const auto stickerKit = itemSchema->stickerKits.memory[i].value;
-        if (std::string_view{ stickerKit->name.data() }.starts_with("spray"))
-            continue;
-        std::string name = interfaces->localize->findAsUTF8(stickerKit->id != 242 ? stickerKit->itemName.data() + 1 : "StickerKit_dhw2014_teamdignitas_gold");
-        stickerKits.emplace_back(stickerKit->id, name, toUpperWide(name));
-    }
-
-    std::sort(std::next(stickerKits.begin()), stickerKits.end());
+    gloveKits.shrink_to_fit();
 }
 
 static std::unordered_map<std::string, const char*> iconOverrides;
@@ -507,32 +506,62 @@ void SkinChanger::updateStatTrak(GameEvent& event) noexcept
 
 const std::vector<SkinChanger::PaintKit>& SkinChanger::getSkinKits() noexcept
 {
+    initializeKits();
     return skinKits;
 }
 
 const std::vector<SkinChanger::PaintKit>& SkinChanger::getGloveKits() noexcept
 {
+    initializeKits();
     return gloveKits;
 }
 
 const std::vector<SkinChanger::PaintKit>& SkinChanger::getStickerKits() noexcept
 {
+    static std::vector<SkinChanger::PaintKit> stickerKits;
+    if (stickerKits.empty()) {
+        stickerKits.emplace_back(0, "None");
+
+        const auto itemSchema = memory->itemSystem()->getItemSchema();
+        stickerKits.reserve(itemSchema->stickerKits.lastAlloc);
+        for (int i = 0; i <= itemSchema->stickerKits.lastAlloc; i++) {
+            const auto stickerKit = itemSchema->stickerKits.memory[i].value;
+            if (std::string_view name{ stickerKit->name.data() }; name.starts_with("spray") || name.starts_with("patch"))
+                continue;
+            std::string name = interfaces->localize->findAsUTF8(stickerKit->id != 242 ? stickerKit->itemName.data() + 1 : "StickerKit_dhw2014_teamdignitas_gold");
+            stickerKits.emplace_back(stickerKit->id, std::move(name));
+        }
+
+        std::sort(stickerKits.begin() + 1, stickerKits.end());
+        stickerKits.shrink_to_fit();
+    }
     return stickerKits;
 }
 
-const std::vector<game_data::quality_name>& SkinChanger::getQualities() noexcept
+const std::vector<SkinChanger::Quality>& SkinChanger::getQualities() noexcept
 {
-    static std::vector<game_data::quality_name> qualities;
+    static std::vector<Quality> qualities;
     if (qualities.empty()) {
-        qualities.emplace_back(0, "Default");
-
         const auto itemSchema = memory->itemSystem()->getItemSchema();
         for (int i = 0; i <= itemSchema->qualities.lastAlloc; ++i) {
             const auto quality = itemSchema->qualities.memory[i].value;
             if (const auto localizedName = interfaces->localize->findAsUTF8(quality.name); localizedName != quality.name)
                 qualities.emplace_back(quality.value, localizedName);
         }
+
+        if (qualities.empty()) // fallback
+            qualities.emplace_back(0, "Default");
     }
 
     return qualities;
+}
+
+SkinChanger::PaintKit::PaintKit(int id, const std::string& name) noexcept : id(id), name(name)
+{
+    nameUpperCase = Helpers::toUpper(Helpers::toWideString(name));
+}
+
+SkinChanger::PaintKit::PaintKit(int id, std::string&& name) noexcept : id(id), name(std::move(name))
+{
+    nameUpperCase = Helpers::toUpper(Helpers::toWideString(this->name));
 }
