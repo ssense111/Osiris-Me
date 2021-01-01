@@ -104,13 +104,6 @@ enum ItemDefinitionIndex : int
     GLOVE_HYDRA = 5035
 };
 
-#include "../SDK/WeaponId.h"
-
-constexpr auto is_knife(WeaponId id)
-{
-    return (id >= WeaponId::Bayonet && id < WeaponId::GloveStuddedBloodhound) || id == WeaponId::KnifeT || id == WeaponId::Knife;
-}
-
 //extern const std::map<size_t, weapon_info> k_weapon_info;
 namespace game_data
 {
@@ -136,45 +129,6 @@ namespace game_data
         int definition_index = 0;
         const char* name = nullptr;
     };
-
-    const weapon_info* get_weapon_info(int defindex);
-
-    constexpr auto knife_names = std::to_array<weapon_name>({
-        {0, "Default"},
-        {WEAPON_KNIFE_BAYONET, "Bayonet"},
-        {WEAPON_KNIFE_CSS, "Classic Knife"},
-        {WEAPON_KNIFE_SKELETON, "Skeleton Knife"},
-        {WEAPON_KNIFE_OUTDOOR, "Nomad Knife"},
-        {WEAPON_KNIFE_CORD, "Paracord Knife"},
-        {WEAPON_KNIFE_CANIS, "Survival Knife"},
-        {WEAPON_KNIFE_FLIP, "Flip Knife"},
-        {WEAPON_KNIFE_GUT, "Gut Knife"},
-        {WEAPON_KNIFE_KARAMBIT, "Karambit"},
-        {WEAPON_KNIFE_M9_BAYONET, "M9 Bayonet"},
-        {WEAPON_KNIFE_TACTICAL, "Huntsman Knife"},
-        {WEAPON_KNIFE_FALCHION, "Falchion Knife"},
-        {WEAPON_KNIFE_SURVIVAL_BOWIE, "Bowie Knife"},
-        {WEAPON_KNIFE_BUTTERFLY, "Butterfly Knife"},
-        {WEAPON_KNIFE_PUSH, "Shadow Daggers"},
-        {WEAPON_KNIFE_URSUS, "Ursus Knife"},
-        {WEAPON_KNIFE_GYPSY_JACKKNIFE, "Navaja Knife"},
-        {WEAPON_KNIFE_STILETTO, "Stiletto Knife"},
-        {WEAPON_KNIFE_WIDOWMAKER, "Talon Knife"}
-    });
-
-    constexpr auto glove_names = std::to_array<weapon_name>({
-        {0, "Default"},
-        {GLOVE_STUDDED_BROKENFANG, "Brokenfang"},
-        {GLOVE_STUDDED_BLOODHOUND, "Bloodhound"},
-        {GLOVE_T_SIDE, "Default (Terrorists)"},
-        {GLOVE_CT_SIDE, "Default (Counter-Terrorists)"},
-        {GLOVE_SPORTY, "Sporty"},
-        {GLOVE_SLICK, "Slick"},
-        {GLOVE_LEATHER_WRAP, "Handwrap"},
-        {GLOVE_MOTORCYCLE, "Motorcycle"},
-        {GLOVE_SPECIALIST, "Specialist"},
-        {GLOVE_HYDRA, "Hydra"}
-    });
 
     constexpr auto weapon_names = std::to_array<weapon_name>({
         {WEAPON_KNIFE, "Knife"},
