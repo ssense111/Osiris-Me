@@ -56,14 +56,10 @@ static constexpr auto is_knife(WeaponId id)
     return (id >= WeaponId::Bayonet && id < WeaponId::GloveStuddedBloodhound) || id == WeaponId::KnifeT || id == WeaponId::Knife;
 }
 
-item_setting* get_by_definition_index(const int definition_index)
+item_setting* get_by_definition_index(WeaponId weaponId)
 {
-    auto it = std::find_if(std::begin(config->skinChanger), std::end(config->skinChanger), [definition_index](const item_setting& e)
-        {
-            return e.enabled && e.itemId == definition_index;
-        });
-
-    return it == std::end(config->skinChanger) ? nullptr : &*it;
+    const auto it = std::find_if(config->skinChanger.begin(), config->skinChanger.end(), [weaponId](const item_setting& e) { return e.enabled && e.itemId == weaponId; });
+    return it == config->skinChanger.end() ? nullptr : &*it;
 }
 
 static std::vector<SkinChanger::PaintKit> skinKits{ { 0, "-" } };
@@ -142,21 +138,7 @@ static void initializeKits() noexcept
 
 void apply_sticker_changer(Entity* item) noexcept
 {
-    /*
-    if (constexpr auto hash{ fnv::hash("CBaseAttributableItem->m_Item") }; !s_econ_item_interface_wrapper_offset)
-        s_econ_item_interface_wrapper_offset = netvars->operator[](hash) + 0xC;
-
-    static vmt_multi_hook hook;
-
-    const auto econ_item_interface_wrapper = std::uintptr_t(item) + s_econ_item_interface_wrapper_offset;
-
-    if (hook.initialize_and_hook_instance(reinterpret_cast<void*>(econ_item_interface_wrapper))) {
-        hook.apply_hook<GetStickerAttributeBySlotIndexFloat>(4);
-        hook.apply_hook<GetStickerAttributeBySlotIndexInt>(5);
-    }
-    */
-
-    if (auto config = get_by_definition_index(item->itemDefinitionIndex())) {
+    if (auto config = get_by_definition_index(item->itemDefinitionIndex2())) {
         constexpr auto m_Item = fnv::hash("CBaseAttributableItem->m_Item");
         const auto attributeList = std::uintptr_t(item) + netvars->operator[](m_Item) + /* m_AttributeList = */ WIN32_LINUX(0x244, 0x2F8);
 
@@ -190,10 +172,8 @@ static void apply_config_on_attributable_item(Entity* item, const item_setting& 
     if (is_knife(item->itemDefinitionIndex2()))
         item->entityQuality() = 3; // make a star appear on knife
 
-#ifdef _WIN32
     if (config.custom_name[0])
-        strcpy_s(item->customName(), config.custom_name);
-#endif
+        std::strncpy(item->customName(), config.custom_name, 32);
 
     if (config.paintKit)
         item->fallbackPaintKit() = config.paintKit;
@@ -206,7 +186,7 @@ static void apply_config_on_attributable_item(Entity* item, const item_setting& 
     if (auto& definition_index = item->itemDefinitionIndex(); config.definition_override_index && config.definition_override_index != definition_index) {
         definition_index = config.definition_override_index;
         if (const auto def = memory->itemSystem()->getItemSchema()->getItemDefinitionInterface(WeaponId{ definition_index })) {
-            item->setModelIndex(interfaces->modelInfo->getModelIndex(config.itemId == GLOVE_T_SIDE ? def->getWorldDisplayModel() : def->getPlayerDisplayModel()));
+            item->setModelIndex(interfaces->modelInfo->getModelIndex(config.itemId == WeaponId::GloveT ? def->getWorldDisplayModel() : def->getPlayerDisplayModel()));
             item->preDataUpdate(0);
         }
     }
@@ -252,7 +232,7 @@ static void post_data_update_start(int localHandle) noexcept
     {
         const auto wearables = local->wearables();
 
-        const auto glove_config = get_by_definition_index(GLOVE_T_SIDE);
+        const auto glove_config = get_by_definition_index(WeaponId::GloveT);
 
         static int glove_handle;
 
@@ -322,10 +302,10 @@ static void post_data_update_start(int localHandle) noexcept
             if (!weapon)
                 continue;
 
-            auto& definition_index = weapon->itemDefinitionIndex();
+            auto& weaponId = weapon->itemDefinitionIndex2();
 
             // All knives are terrorist knives.
-            if (const auto active_conf = get_by_definition_index(is_knife(weapon->itemDefinitionIndex2()) ? WEAPON_KNIFE : definition_index))
+            if (const auto active_conf = get_by_definition_index(is_knife(weaponId) ? WeaponId::Knife : weaponId))
                 apply_config_on_attributable_item(weapon, *active_conf, player_info.xuidLow);
         }
     }
@@ -397,7 +377,7 @@ void SkinChanger::overrideHudIcon(GameEvent& event) noexcept
     if (const auto weapon = std::string_view{ event.getString("weapon") }; weapon != "knife" && weapon != "knife_t")
         return;
 
-    if (const auto active_conf = get_by_definition_index(WEAPON_KNIFE)) {
+    if (const auto active_conf = get_by_definition_index(WeaponId::Knife)) {
         if (const auto def = memory->itemSystem()->getItemSchema()->getItemDefinitionInterface(WeaponId(active_conf->definition_override_index))) {
             if (const auto defName = def->getDefinitionName(); defName && std::string_view{ defName }.starts_with("weapon_"))
                 event.setString("weapon", defName + 7);
@@ -417,7 +397,7 @@ void SkinChanger::updateStatTrak(GameEvent& event) noexcept
     if (!weapon)
         return;
 
-    if (const auto conf = get_by_definition_index(is_knife(weapon->itemDefinitionIndex2()) ? WEAPON_KNIFE : weapon->itemDefinitionIndex()); conf && conf->stat_trak > -1) {
+    if (const auto conf = get_by_definition_index(is_knife(weapon->itemDefinitionIndex2()) ? WeaponId::Knife : weapon->itemDefinitionIndex2()); conf && conf->stat_trak > -1) {
         weapon->fallbackStatTrak() = ++conf->stat_trak;
         weapon->postDataUpdate(0);
     }
@@ -445,7 +425,7 @@ const std::vector<SkinChanger::PaintKit>& SkinChanger::getStickerKits() noexcept
         stickerKits.reserve(itemSchema->stickerKits.lastAlloc);
         for (int i = 0; i <= itemSchema->stickerKits.lastAlloc; i++) {
             const auto stickerKit = itemSchema->stickerKits.memory[i].value;
-            if (std::string_view name{ stickerKit->name.data() }; name.starts_with("spray") || name.starts_with("patch"))
+            if (std::string_view name{ stickerKit->name.data() }; name.starts_with("spray") || name.starts_with("patch") || name.ends_with("graffiti"))
                 continue;
             std::wstring name = interfaces->localize->findSafe(stickerKit->id != 242 ? stickerKit->itemName.data() + 1 : "StickerKit_dhw2014_teamdignitas_gold");
             stickerKits.emplace_back(stickerKit->id, std::move(name), stickerKit->rarity);
@@ -523,4 +503,163 @@ SkinChanger::PaintKit::PaintKit(int id, std::wstring&& name, int rarity) noexcep
 {
     this->name = interfaces->localize->convertUnicodeToAnsi(nameUpperCase.c_str());
     nameUpperCase = Helpers::toUpper(nameUpperCase);
+}
+
+static int random(int min, int max) noexcept
+{
+    return rand() % (max - min + 1) + min;
+}
+
+static int get_new_animation(const uint32_t model, const int sequence) noexcept
+{
+    enum Sequence
+    {
+        SEQUENCE_DEFAULT_DRAW = 0,
+        SEQUENCE_DEFAULT_IDLE1 = 1,
+        SEQUENCE_DEFAULT_IDLE2 = 2,
+        SEQUENCE_DEFAULT_LIGHT_MISS1 = 3,
+        SEQUENCE_DEFAULT_LIGHT_MISS2 = 4,
+        SEQUENCE_DEFAULT_HEAVY_MISS1 = 9,
+        SEQUENCE_DEFAULT_HEAVY_HIT1 = 10,
+        SEQUENCE_DEFAULT_HEAVY_BACKSTAB = 11,
+        SEQUENCE_DEFAULT_LOOKAT01 = 12,
+
+        SEQUENCE_BUTTERFLY_DRAW = 0,
+        SEQUENCE_BUTTERFLY_DRAW2 = 1,
+        SEQUENCE_BUTTERFLY_LOOKAT01 = 13,
+        SEQUENCE_BUTTERFLY_LOOKAT03 = 15,
+
+        SEQUENCE_FALCHION_IDLE1 = 1,
+        SEQUENCE_FALCHION_HEAVY_MISS1 = 8,
+        SEQUENCE_FALCHION_HEAVY_MISS1_NOFLIP = 9,
+        SEQUENCE_FALCHION_LOOKAT01 = 12,
+        SEQUENCE_FALCHION_LOOKAT02 = 13,
+
+        SEQUENCE_DAGGERS_IDLE1 = 1,
+        SEQUENCE_DAGGERS_LIGHT_MISS1 = 2,
+        SEQUENCE_DAGGERS_LIGHT_MISS5 = 6,
+        SEQUENCE_DAGGERS_HEAVY_MISS2 = 11,
+        SEQUENCE_DAGGERS_HEAVY_MISS1 = 12,
+
+        SEQUENCE_BOWIE_IDLE1 = 1,
+    };
+
+    // Hashes for best performance.
+    switch (model) {
+    case fnv::hash("models/weapons/v_knife_butterfly.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_DRAW:
+            return random(SEQUENCE_BUTTERFLY_DRAW, SEQUENCE_BUTTERFLY_DRAW2);
+        case SEQUENCE_DEFAULT_LOOKAT01:
+            return random(SEQUENCE_BUTTERFLY_LOOKAT01, SEQUENCE_BUTTERFLY_LOOKAT03);
+        default:
+            return sequence + 1;
+        }
+    }
+    case fnv::hash("models/weapons/v_knife_falchion_advanced.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_IDLE2:
+            return SEQUENCE_FALCHION_IDLE1;
+        case SEQUENCE_DEFAULT_HEAVY_MISS1:
+            return random(SEQUENCE_FALCHION_HEAVY_MISS1, SEQUENCE_FALCHION_HEAVY_MISS1_NOFLIP);
+        case SEQUENCE_DEFAULT_LOOKAT01:
+            return random(SEQUENCE_FALCHION_LOOKAT01, SEQUENCE_FALCHION_LOOKAT02);
+        case SEQUENCE_DEFAULT_DRAW:
+        case SEQUENCE_DEFAULT_IDLE1:
+            return sequence;
+        default:
+            return sequence - 1;
+        }
+    }
+    case fnv::hash("models/weapons/v_knife_push.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_IDLE2:
+            return SEQUENCE_DAGGERS_IDLE1;
+        case SEQUENCE_DEFAULT_LIGHT_MISS1:
+        case SEQUENCE_DEFAULT_LIGHT_MISS2:
+            return random(SEQUENCE_DAGGERS_LIGHT_MISS1, SEQUENCE_DAGGERS_LIGHT_MISS5);
+        case SEQUENCE_DEFAULT_HEAVY_MISS1:
+            return random(SEQUENCE_DAGGERS_HEAVY_MISS2, SEQUENCE_DAGGERS_HEAVY_MISS1);
+        case SEQUENCE_DEFAULT_HEAVY_HIT1:
+        case SEQUENCE_DEFAULT_HEAVY_BACKSTAB:
+        case SEQUENCE_DEFAULT_LOOKAT01:
+            return sequence + 3;
+        case SEQUENCE_DEFAULT_DRAW:
+        case SEQUENCE_DEFAULT_IDLE1:
+            return sequence;
+        default:
+            return sequence + 2;
+        }
+    }
+    case fnv::hash("models/weapons/v_knife_survival_bowie.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_DRAW:
+        case SEQUENCE_DEFAULT_IDLE1:
+            return sequence;
+        case SEQUENCE_DEFAULT_IDLE2:
+            return SEQUENCE_BOWIE_IDLE1;
+        default:
+            return sequence - 1;
+        }
+    }
+    case fnv::hash("models/weapons/v_knife_ursus.mdl"):
+    case fnv::hash("models/weapons/v_knife_skeleton.mdl"):
+    case fnv::hash("models/weapons/v_knife_outdoor.mdl"):
+    case fnv::hash("models/weapons/v_knife_cord.mdl"):
+    case fnv::hash("models/weapons/v_knife_canis.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_DRAW:
+            return random(SEQUENCE_BUTTERFLY_DRAW, SEQUENCE_BUTTERFLY_DRAW2);
+        case SEQUENCE_DEFAULT_LOOKAT01:
+            return random(SEQUENCE_BUTTERFLY_LOOKAT01, 14);
+        default:
+            return sequence + 1;
+        }
+    }
+    case fnv::hash("models/weapons/v_knife_stiletto.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_LOOKAT01:
+            return random(12, 13);
+        }
+    }
+    case fnv::hash("models/weapons/v_knife_widowmaker.mdl"):
+    {
+        switch (sequence)
+        {
+        case SEQUENCE_DEFAULT_LOOKAT01:
+            return random(14, 15);
+        }
+    }
+    default:
+        return sequence;
+    }
+}
+
+void SkinChanger::fixKnifeAnimation(Entity* viewModelWeapon, long& sequence) noexcept
+{
+    if (!is_knife(viewModelWeapon->itemDefinitionIndex2()))
+        return;
+
+    const auto active_conf = get_by_definition_index(WeaponId::Knife);
+    if (!active_conf || !active_conf->definition_override_index)
+        return;
+
+    const auto def = memory->itemSystem()->getItemSchema()->getItemDefinitionInterface(WeaponId(active_conf->definition_override_index));
+    if (!def)
+        return;
+
+    if (const auto model = def->getPlayerDisplayModel())
+        sequence = get_new_animation(fnv::hashRuntime(model), sequence);
 }

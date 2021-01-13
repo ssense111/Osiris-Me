@@ -113,6 +113,15 @@ static void read(const json& j, const char* key, int& o) noexcept
         val.get_to(o);
 }
 
+static void read(const json& j, const char* key, WeaponId& o) noexcept
+{
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.is_number_integer())
+        val.get_to(o);
+}
+
 static void read(const json& j, const char* key, KeyBind& o) noexcept
 {
     if (!j.contains(key))
@@ -120,6 +129,17 @@ static void read(const json& j, const char* key, KeyBind& o) noexcept
 
     if (const auto& val = j[key]; val.is_string())
         o = val.get<std::string>().c_str();
+}
+
+static void read(const json& j, const char* key, char* o, std::size_t size) noexcept
+{
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.is_string()) {
+        std::strncpy(o, val.get<std::string>().c_str(), size);
+        o[size - 1] = '\0';
+    }
 }
 
 template <typename T, size_t Size>
@@ -329,8 +349,6 @@ static void from_json(const json& j, Config::Aimbot& a)
 static void from_json(const json& j, Config::Triggerbot& t)
 {
     read(j, "Enabled", t.enabled);
-    read(j, "On key", t.onKey);
-    read(j, "Key", t.key);
     read(j, "Friendly fire", t.friendlyFire);
     read(j, "Scoped only", t.scopedOnly);
     read(j, "Ignore flash", t.ignoreFlash);
@@ -387,6 +405,8 @@ static void from_json(const json& j, Config::Chams& c)
 
 static void from_json(const json& j, Config::StreamProofESP& e)
 {
+    read(j, "Toggle Key", e.toggleKey);
+    read(j, "Hold Key", e.holdKey);
     read(j, "Allies", e.allies);
     read(j, "Enemies", e.enemies);
     read(j, "Weapons", e.weapons);
@@ -470,12 +490,7 @@ static void from_json(const json& j, item_setting& i)
     read(j, "Seed", i.seed);
     read(j, "StatTrak", i.stat_trak);
     read(j, "Wear", i.wear);
-
-#ifdef _WIN32
-    if (j.contains("Custom name"))
-        strncpy_s(i.custom_name, j["Custom name"].get<std::string>().c_str(), _TRUNCATE);
-#endif
-
+    read(j, "Custom name", i.custom_name, sizeof(i.custom_name));
     read(j, "Stickers", i.stickers);
 
     i.onLoad();
@@ -553,10 +568,7 @@ static void from_json(const json& j, Config::Misc& m)
     read(j, "Bunny hop", m.bunnyHop);
     read(j, "Custom clan tag", m.customClanTag);
     read(j, "Clock tag", m.clocktag);
-#ifdef _WIN32
-    if (j.contains("Clan tag"))
-        strncpy_s(m.clanTag, j["Clan tag"].get<std::string>().c_str(), _TRUNCATE);
-#endif
+    read(j, "Clan tag", m.clanTag, sizeof(m.clanTag));
     read(j, "Animated clan tag", m.animatedClanTag);
     read(j, "Fast duck", m.fastDuck);
     read(j, "Moonwalk", m.moonwalk);
@@ -582,11 +594,11 @@ static void from_json(const json& j, Config::Misc& m)
     read(j, "Disable model occlusion", m.disableModelOcclusion);
     read(j, "Aspect Ratio", m.aspectratio);
     read(j, "Kill message", m.killMessage);
-    read<value_t::object>(j, "Kill message string", m.killMessageString);
+    read<value_t::string>(j, "Kill message string", m.killMessageString);
     read(j, "Name stealer", m.nameStealer);
     read(j, "Disable HUD blur", m.disablePanoramablur);
     read(j, "Ban color", m.banColor);
-    read<value_t::object>(j, "Ban text", m.banText);
+    read<value_t::string>(j, "Ban text", m.banText);
     read(j, "Fast plant", m.fastPlant);
     read(j, "Fast Stop", m.fastStop);
     read<value_t::object>(j, "Bomb timer", m.bombTimer);
@@ -602,9 +614,9 @@ static void from_json(const json& j, Config::Misc& m)
     read(j, "Max angle delta", m.maxAngleDelta);
     read(j, "Fake prime", m.fakePrime);
     read(j, "Fix tablet signal", m.fixTabletSignal);
-    read<value_t::object>(j, "Custom Hit Sound", m.customHitSound);
+    read<value_t::string>(j, "Custom Hit Sound", m.customHitSound);
     read(j, "Kill sound", m.killSound);
-    read<value_t::object>(j, "Custom Kill Sound", m.customKillSound);
+    read<value_t::string>(j, "Custom Kill Sound", m.customKillSound);
     read<value_t::object>(j, "Purchase List", m.purchaseList);
     read<value_t::object>(j, "Reportbot", m.reportbot);
     read(j, "Opposite Hand Knife", m.oppositeHandKnife);
@@ -651,6 +663,8 @@ void Config::load(const char8_t* name, bool incremental) noexcept
     read(j, "Aimbot Key mode", aimbotKeyMode);
 
     read(j, "Triggerbot", triggerbot);
+    read(j, "Triggerbot Key", triggerbotHoldKey);
+
     read<value_t::object>(j, "Backtrack", backtrack);
     read<value_t::object>(j, "Anti aim", antiAim);
     read(j, "Glow", glow);
@@ -827,8 +841,6 @@ static void to_json(json& j, const Config::Aimbot& o, const Config::Aimbot& dumm
 static void to_json(json& j, const Config::Triggerbot& o, const Config::Triggerbot& dummy = {})
 {
     WRITE("Enabled", enabled);
-    WRITE("On key", onKey);
-    WRITE("Key", key);
     WRITE("Friendly fire", friendlyFire);
     WRITE("Scoped only", scopedOnly);
     WRITE("Ignore flash", ignoreFlash);
@@ -885,6 +897,10 @@ static void to_json(json& j, const Config::Chams& o)
 
 static void to_json(json& j, const Config::StreamProofESP& o)
 {
+    if (o.toggleKey != KeyBind::NONE)
+        j["Toggle Key"] = o.toggleKey.toString();
+    if (o.holdKey != KeyBind::NONE)
+        j["Hold Key"] = o.holdKey.toString();
     j["Allies"] = o.allies;
     j["Enemies"] = o.enemies;
     j["Weapons"] = o.weapons;
@@ -1154,10 +1170,12 @@ void Config::save(size_t id) const noexcept
 
         j["Aimbot"] = aimbot;
         j["Aimbot On key"] = aimbotOnKey;
-        j["Aimbot Key"] = aimbotKey;
+        to_json(j["Aimbot Key"], aimbotKey, KeyBind::NONE);
         j["Aimbot Key mode"] = aimbotKeyMode;
 
         j["Triggerbot"] = triggerbot;
+        to_json(j["Triggerbot Key"], triggerbotHoldKey, KeyBind::NONE);
+
         j["Backtrack"] = backtrack;
         j["Anti aim"] = antiAim;
         j["Glow"] = glow;

@@ -1,17 +1,7 @@
 #pragma once
 
-#include <array>
 #include <memory>
-#include <string>
-#include <string_view>
 #include <type_traits>
-
-#ifdef _WIN32
-#include <Windows.h>
-#include <Psapi.h>
-#elif __linux__
-#include <link.h>
-#endif
 
 #include "SDK/Platform.h"
 
@@ -73,6 +63,7 @@ public:
     int* dispatchSound;
     uintptr_t traceToExit;
     ViewRender* viewRender;
+    void* viewRenderBeams;
     uintptr_t drawScreenEffectMaterial;
     uint8_t* fakePrime;
     std::add_pointer_t<void __CDECL(const char* msg, ...)> debugMsg;
