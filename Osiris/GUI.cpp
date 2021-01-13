@@ -1234,12 +1234,12 @@ void GUI::renderModelChangerWindow(bool contentOnly) noexcept
 
     ImGui::PushItemWidth(110.0f);
     ImGui::Combo("##1", &itemIndex, [](void* data, int idx, const char** out_text) {
-        *out_text = game_data::weapon_names[idx].name;
+        *out_text = ModelChanger::weapon_names[idx].name;
         return true;
-    }, nullptr, game_data::weapon_names.size(), 5);
+    }, nullptr, IM_ARRAYSIZE(ModelChanger::weapon_names), 5);
     ImGui::PopItemWidth();
 
-    auto& selected_entry = config->modelChanger[game_data::weapon_names[itemIndex].definition_index];
+    auto& selected_entry = config->modelChanger[ModelChanger::weapon_names[itemIndex].definition_index];
 
     {
         ImGui::Separator();

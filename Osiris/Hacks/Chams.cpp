@@ -141,7 +141,8 @@ void Chams::renderWeapons() noexcept
     if (activeWeapon) {
         const auto itemIndex = activeWeapon->itemDefinitionIndex();
         const auto itemIndex2 = activeWeapon->itemDefinitionIndex2();
-        auto& selected_entry = config->modelChanger[is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
+        int WEAPON_KNIFE = 42;
+        auto& selected_entry = config->modelChanger[ModelChanger::is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
         if (selected_entry.vtfenabled && selected_entry.skinthatyouselected[0]) {
             renderWeaponsSkins();
         }
@@ -264,7 +265,8 @@ void Chams::renderWeaponsSkins() noexcept
     const auto activeWeapon = localPlayer->getActiveWeapon();
     const auto itemIndex = activeWeapon->itemDefinitionIndex();
     const auto itemIndex2 = activeWeapon->itemDefinitionIndex2();
-    auto& selected_entry = config->modelChanger[is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
+    int WEAPON_KNIFE = 42;
+    auto& selected_entry = config->modelChanger[ModelChanger::is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
 
     if (!selected_entry.skinthatyouselected[0])
         return;

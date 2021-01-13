@@ -16,8 +16,9 @@ void ModelChanger::weaponModel(FrameStage stage) noexcept
                 const auto activeWeapon = localPlayer->getActiveWeapon();
                 const auto itemIndex = activeWeapon->itemDefinitionIndex();
                 const auto itemIndex2 = activeWeapon->itemDefinitionIndex2();
-                auto& selected_entry = config->modelChanger[is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
-                if (itemIndex && ((is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex) || (itemIndex < 65)) && selected_entry.mdlenabled) {
+                int WEAPON_KNIFE = 42;
+                auto& selected_entry = config->modelChanger[ModelChanger::is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex];
+                if (itemIndex && ((ModelChanger::is_knife(itemIndex2) ? WEAPON_KNIFE : itemIndex) || (itemIndex < 65)) && selected_entry.mdlenabled) {
                     modelprecache->addString(false, selected_entry.modelthatyouselected);
                     activeWeapon->setModelIndex(interfaces->modelInfo->getModelIndex(selected_entry.modelthatyouselected));
                     if (view_model_handle) {
