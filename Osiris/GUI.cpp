@@ -72,7 +72,7 @@ GUI::GUI() noexcept
 void GUI::render() noexcept
 {
     if (!config->style.menuStyle) {
-        renderGuiStyle2();=
+        renderGuiStyle2();
     } else {
         renderGuiStyle2();
     }
