@@ -187,7 +187,7 @@ void Glow::drawGUI(bool contentOnly) noexcept
     ImGui::Checkbox("Enabled", &glowConfig[currentItem].enabled);
     ImGui::Separator();
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnOffset(1, 150.0f);
+    ImGui::SetColumnOffset(130, 150.0f);
     ImGui::Checkbox("Health based", &glowConfig[currentItem].healthBased);
 
     ImGuiCustom::colorPopup("Color", glowConfig[currentItem].color, &glowConfig[currentItem].rainbow, &glowConfig[currentItem].rainbowSpeed);

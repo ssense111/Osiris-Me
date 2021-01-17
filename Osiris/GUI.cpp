@@ -265,7 +265,7 @@ void GUI::renderAimbotWindow(bool contentOnly) noexcept
     ImGui::SameLine();
     ImGui::Checkbox("Enabled", &config->aimbot[currentWeapon].enabled);
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnOffset(1, 220.0f);
+    ImGui::SetColumnOffset(130, 220.0f);
     ImGui::Checkbox("Aimlock", &config->aimbot[currentWeapon].aimlock);
     ImGui::Checkbox("Silent", &config->aimbot[currentWeapon].silent);
     ImGui::Checkbox("Friendly fire", &config->aimbot[currentWeapon].friendlyFire);
@@ -1351,7 +1351,7 @@ void GUI::renderMiscWindow(bool contentOnly) noexcept
         ImGui::Begin("Misc", &window.misc, windowFlags);
     }
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnOffset(1, 230.0f);
+    ImGui::SetColumnOffset(130, 230.0f);
     hotkey2("Menu Key", config->misc.menuKey);
     ImGui::Checkbox("Anti AFK kick", &config->misc.antiAfkKick);
     ImGui::Checkbox("Auto strafe", &config->misc.autoStrafe);
