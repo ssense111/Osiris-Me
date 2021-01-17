@@ -112,13 +112,6 @@ public:
         float pitchAngle{ 0.0f };
     } antiAim;
 
-    struct Glow : ColorA {
-        bool enabled{ false };
-        bool healthBased{ false };
-        int style{ 0 };
-    };
-    std::array<Glow, 21> glow;
-
     struct Chams {
         struct Material : ColorA {
             bool enabled = false;
@@ -135,7 +128,7 @@ public:
     std::unordered_map<std::string, Chams> chams;
 
     struct StreamProofESP {
-        KeyBind toggleKey = KeyBind::NONE;
+        KeyBindToggle toggleKey = KeyBind::NONE;
         KeyBind holdKey = KeyBind::NONE;
 
         std::unordered_map<std::string, Player> allies;
@@ -191,6 +184,7 @@ public:
         int playerModelCT{ 0 };
         std::string csgoPath{ "csgo\\models\\weapons" };
         std::string materialPath{ "csgo\\materials\\models\\weapons" };
+        BulletTracers bulletTracers;
 
         struct ColorCorrection {
             bool enabled = false;
