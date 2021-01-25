@@ -47,17 +47,7 @@ public:
     {
         return customSkins;
     }
-
-    struct Color {
-        std::array<float, 3> color{ 1.0f, 1.0f, 1.0f };
-        bool rainbow{ false };
-        float rainbowSpeed{ 0.6f };
-    };
-
-    struct ColorToggle : public Color {
-        bool enabled{ false };
-    };
-
+	
     struct Aimbot {
         bool enabled{ false };
         bool aimlock{ false };
@@ -113,7 +103,7 @@ public:
     } antiAim;
 
     struct Chams {
-        struct Material : ColorA {
+        struct Material : Color4 {
             bool enabled = false;
             bool healthBased = false;
             bool blinking = false;
@@ -162,9 +152,9 @@ public:
         bool noShadows{ false };
         bool wireframeSmoke{ false };
         bool zoom{ false };
-        KeyBind zoomKey = KeyBind::NONE;
+        KeyBindToggle zoomKey = KeyBind::NONE;
         bool thirdperson{ false };
-        KeyBind thirdpersonKey = KeyBind::NONE;
+        KeyBindToggle thirdpersonKey = KeyBind::NONE;
         int thirdpersonDistance{ 0 };
         int viewmodelFov{ 0 };
         int fov{ 0 };
@@ -172,8 +162,8 @@ public:
         int flashReduction{ 0 };
         float brightness{ 0.0f };
         int skybox{ 0 };
-        ColorToggle world;
-        ColorToggle sky;
+        ColorToggle3 world;
+        ColorToggle3 sky;
         bool deagleSpinner{ false };
         int screenEffect{ 0 };
         int hitEffect{ 0 };
@@ -262,13 +252,13 @@ public:
         KeyBind slowwalkKey = KeyBind::NONE;
         ColorToggleThickness noscopeCrosshair;
         ColorToggleThickness recoilCrosshair;
-        ColorToggle spectatorList;
-        ColorToggle watermark;
+        ColorToggle3 spectatorList;
+        ColorToggle3 watermark;
         float aspectratio{ 0 };
         std::string killMessageString{ "Gotcha!" };
         int banColor{ 6 };
         std::string banText{ "Cheater has been permanently banned from official CS:GO servers." };
-        ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f };
+        ColorToggle3 bombTimer{ 1.0f, 0.55f, 0.0f };
         KeyBind prepareRevolverKey = KeyBind::NONE;
         int hitSound{ 0 };
         int chokedPackets{ 0 };
