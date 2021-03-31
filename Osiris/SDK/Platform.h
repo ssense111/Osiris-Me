@@ -35,7 +35,6 @@
 #endif
 
 constexpr auto CLIENT_DLL = WIN32_LINUX("client", "csgo/bin/linux64/client_client.so");
-#define FILESYSTEM_DLL "filesystem_stdio"
 constexpr auto ENGINE_DLL = WIN32_LINUX("engine", "engine_client.so");
 constexpr auto FILESYSTEM_DLL = WIN32_LINUX("filesystem_stdio", "filesystem_stdio_client.so");
 constexpr auto INPUTSYSTEM_DLL = WIN32_LINUX("inputsystem", "inputsystem_client.so");

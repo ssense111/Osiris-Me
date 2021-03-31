@@ -19,8 +19,6 @@ namespace ImGuiCustom
     void colorPicker(const char* name, ColorToggleThickness& colorConfig) noexcept;
     void colorPicker(const char* name, ColorToggleThicknessRounding& colorConfig) noexcept;
     void arrowButtonDisabled(const char* id, ImGuiDir dir) noexcept;
-    void colorPicker2(const char* name, float color[3], bool* enable = nullptr, bool* rainbow = nullptr, float* rainbowSpeed = nullptr) noexcept;
-    void colorPicker2(const char* name, Config::ColorToggle& colorConfig) noexcept;
 }
 
 class KeyBind;
