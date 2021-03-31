@@ -23,7 +23,7 @@ jobs:
     # Build command
     - name: Build
       shell: cmd
-      run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release'
+      run: '"%MSBUILD_PATH%\MSBuild.exe" Osiris/Osiris.vcxproj /p:Platform=Win32 /p:Configuration=Release /p:PlatformToolset=ClangCL'
     # Delete Release and Tag
     - uses: dev-drprasad/delete-tag-and-release@v0.1.2
       with:

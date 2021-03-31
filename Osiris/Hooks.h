@@ -52,7 +52,6 @@ public:
     HookType engine;
     HookType fileSystem;
     HookType modelRender;
-    HookType panel;
     HookType sound;
     HookType surface;
     HookType viewRender;

@@ -10,6 +10,8 @@
 #include "SDK/matrix3x4.h"
 #include "SDK/Vector.h"
 
+#include "Texture.h"
+
 struct LocalPlayerData;
 
 struct PlayerData;
@@ -19,6 +21,7 @@ struct EntityData;
 struct LootCrateData;
 struct ProjectileData;
 struct BombData;
+struct InfernoData;
 
 struct Matrix4x4;
 
@@ -26,6 +29,8 @@ namespace GameData
 {
     void update() noexcept;
     void clearProjectileList() noexcept;
+    void clearTextures() noexcept;
+    void clearUnusedAvatars() noexcept;
 
     class Lock {
     public:
@@ -34,8 +39,11 @@ namespace GameData
         std::scoped_lock<std::mutex> lock;
         static inline std::mutex mutex;
     };
+    
+    // Lock-free
+    int getNetOutgoingLatency() noexcept;
 
-    // You have to acquire lock before using these getters
+    // You have to acquire Lock before using these getters
     const Matrix4x4& toScreenMatrix() noexcept;
     const LocalPlayerData& local() noexcept;
     const std::vector<PlayerData>& players() noexcept;
@@ -46,6 +54,7 @@ namespace GameData
     const std::vector<LootCrateData>& lootCrates() noexcept;
     const std::forward_list<ProjectileData>& projectiles() noexcept;
     const BombData& plantedC4() noexcept;
+    const std::vector<InfernoData>& infernos() noexcept;
 }
 
 struct LocalPlayerData {
@@ -103,6 +112,8 @@ struct ProjectileData : BaseData {
     std::vector<std::pair<float, Vector>> trajectory;
 };
 
+enum class Team;
+
 struct PlayerData : BaseData {
     PlayerData(Entity* entity) noexcept;
     PlayerData(const PlayerData&) = delete;
@@ -111,6 +122,7 @@ struct PlayerData : BaseData {
     PlayerData& operator=(PlayerData&&) = default;
 
     void update(Entity* entity) noexcept;
+    ImTextureID getAvatarTexture() const noexcept;
 
     bool dormant;
     bool enemy = false;
@@ -119,10 +131,12 @@ struct PlayerData : BaseData {
     bool spotted;
     bool inViewFrustum;
     bool alive;
+    bool immune = false;
     float flashDuration;
     int health;
     int handle;
-    char name[128];
+    Team team;
+    std::string name;
     Vector headMins, headMaxs;
     Vector origin;
     std::string activeWeapon;
@@ -148,8 +162,8 @@ struct LootCrateData : BaseData {
 struct ObserverData {
     ObserverData(Entity* entity, Entity* obs, bool targetIsLocalPlayer) noexcept;
 
-    char name[128];
-    char target[128];
+    int playerHandle;
+    int targetHandle;
     bool targetIsLocalPlayer;
 };
 
@@ -162,4 +176,10 @@ struct BombData {
     float defuseCountDown;
     float defuseLength;
     int bombsite;
+};
+
+struct InfernoData {
+    InfernoData(Entity* inferno) noexcept;
+
+    std::vector<Vector> points;
 };
